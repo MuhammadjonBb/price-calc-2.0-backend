@@ -3,6 +3,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
+const { auth } = require("./auth");
 require("dotenv").config();
 
 const app = express();
@@ -19,7 +20,7 @@ const users = [
   },
 ];
 
-app.get("/products", (req, res) => {
+app.get("/products", auth, (req, res) => {
   res.json(products);
 });
 
