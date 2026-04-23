@@ -3,18 +3,19 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const SECRET = "secret123"; // секрет для подписи JWT, в реальном приложении его нужно хранить в переменных окружения
+const SECRET = process.env.JWT_SECRET; // секрет для подписи JWT, в реальном приложении его нужно хранить в переменных окружения
 
 // заранее заданные пользователи
 const users = [
   {
-    username: "admin",
-    password: "$2b$10$qtrbm5WBJ1jE1CypIigxW.qIlrQw7XUo6newek8pGwxO9PKdH8f5i", // сюда вставляешь хэш
+    username: process.env.ADMIN_USERNAME, // сюда вставляешь имя пользователя из .env
+    password: process.env.ADMIN_PSW, // сюда вставляешь хэш из .env
   },
 ];
 
