@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
 const { auth } = require("./auth");
+const nanoid = require("nanoid").nanoid;
+
 require("dotenv").config();
 
 const app = express();
@@ -17,11 +19,42 @@ const users = [
   {
     username: process.env.ADMIN_USERNAME, // сюда вставляешь имя пользователя из .env
     password: process.env.ADMIN_PSW, // сюда вставляешь хэш из .env
+    _id: 1,
+  },
+];
+
+const orders = [
+  {
+    _id: nanoid(),
+    name: "Заказ 1",
+    agent: "Агент 1",
+    statusCode: 0,
+    products: [],
+    user: users[0]._id,
+    createdAt: new Date(),
+    comment: "Комментарий к заказу 1",
+  },
+  {
+    _id: nanoid(),
+    name: "Заказ 2",
+    agent: "Агент 2",
+    statusCode: 1,
+    products: [],
+    user: users[0]._id,
+    createdAt: new Date(),
+    comment: "Комментарий к заказу 2",
   },
 ];
 
 app.get("/products", auth, (req, res) => {
   res.json(products);
+});
+
+app.get("/orders", auth, (req, res) => {
+  const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
+  const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
+
+  res.json(userOrders);
 });
 
 app.post("/login", async (req, res) => {
@@ -41,7 +74,7 @@ app.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Неверный пароль" });
   }
 
-  const token = jwt.sign({ username: user.username }, SECRET, {
+  const token = jwt.sign({ username: user.username, _id: user._id }, SECRET, {
     // создаём токен с полезной нагрузкой (username) и секретом
     expiresIn: "1h", // токен будет действовать 1 час
   });
