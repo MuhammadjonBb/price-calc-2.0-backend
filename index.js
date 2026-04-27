@@ -68,7 +68,6 @@ app.post("/orders", auth, (req, res) => {
     };
 
     orders.unshift(newOrder);
-    console.log(orders);
 
     res.status(201).json(newOrder);
   } catch (error) {
