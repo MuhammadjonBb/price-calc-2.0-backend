@@ -9,7 +9,12 @@ const nanoid = require("nanoid").nanoid;
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // разрешаем запросы только с этого адреса
+    credentials: true, // разрешаем отправлять куки и заголовки авторизации
+  }),
+);
 app.use(express.json());
 
 const SECRET = process.env.JWT_SECRET; // секрет для подписи JWT, в реальном приложении его нужно хранить в переменных окружения
@@ -23,28 +28,7 @@ const users = [
   },
 ];
 
-const orders = [
-  {
-    _id: nanoid(),
-    name: "Заказ 1",
-    agent: "Агент 1",
-    statusCode: 0,
-    products: [],
-    user: users[0]._id,
-    createdAt: new Date(),
-    comment: "Комментарий к заказу 1",
-  },
-  {
-    _id: nanoid(),
-    name: "Заказ 2",
-    agent: "Агент 2",
-    statusCode: 1,
-    products: [],
-    user: users[0]._id,
-    createdAt: new Date(),
-    comment: "Комментарий к заказу 2",
-  },
-];
+const orders = []; // массив для хранения заказов, в реальном приложении это должна быть база данных
 
 app.get("/products", auth, (req, res) => {
   res.json(products);
@@ -55,6 +39,41 @@ app.get("/orders", auth, (req, res) => {
   const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
 
   res.json(userOrders);
+});
+
+app.post("/orders", auth, (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      name,
+      agent,
+      statusCode,
+      products: orderProducts,
+      comment,
+    } = req.body;
+
+    if (!name || !agent || statusCode === undefined) {
+      return res.status(400).json({ message: "Отсутствуют обязательные поля" });
+    }
+
+    const newOrder = {
+      _id: nanoid(),
+      name,
+      agent,
+      statusCode,
+      products: orderProducts || [],
+      user: userId,
+      createdAt: new Date(),
+      comment,
+    };
+
+    orders.unshift(newOrder);
+    console.log(orders);
+
+    res.status(201).json(newOrder);
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка сервера", error: error.message });
+  }
 });
 
 app.post("/login", async (req, res) => {
