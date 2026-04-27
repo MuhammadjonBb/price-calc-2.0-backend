@@ -76,6 +76,22 @@ app.post("/orders", auth, (req, res) => {
   }
 });
 
+app.delete("/orders/:id", auth, (req, res) => {
+  const userId = req.user._id;
+  const orderId = req.params.id;
+
+  const orderIndex = orders.findIndex(
+    (order) => order._id === orderId && order.user === userId,
+  );
+
+  if (orderIndex === -1) {
+    return res.status(404).json({ message: "Заказ не найден" });
+  }
+
+  orders.splice(orderIndex, 1);
+  res.json({ message: "Заказ удалён" });
+});
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
