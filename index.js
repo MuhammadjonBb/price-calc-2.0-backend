@@ -37,6 +37,7 @@ app.get("/products", auth, (req, res) => {
 app.get("/orders", auth, (req, res) => {
   const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
   const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
+  console.log(userOrders);
 
   res.json(userOrders);
 });
@@ -50,6 +51,7 @@ app.post("/orders", auth, (req, res) => {
       statusCode,
       products: orderProducts,
       comment,
+      roadExpense,
     } = req.body;
 
     if (!name || !agent || statusCode === undefined) {
@@ -65,6 +67,7 @@ app.post("/orders", auth, (req, res) => {
       user: userId,
       createdAt: new Date(),
       comment,
+      roadExpense: roadExpense || 0,
     };
 
     orders.unshift(newOrder);
