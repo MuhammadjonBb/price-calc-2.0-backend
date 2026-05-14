@@ -11,7 +11,7 @@ require("dotenv").config();
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173", // разрешаем запросы только с этого адреса
+    origin: ["http://localhost:5173", "http://192.168.100.33:5173"],
     credentials: true, // разрешаем отправлять куки и заголовки авторизации
   }),
 );
@@ -25,6 +25,17 @@ const users = [
     username: process.env.ADMIN_USERNAME, // сюда вставляешь имя пользователя из .env
     password: process.env.ADMIN_PSW, // сюда вставляешь хэш из .env
     _id: 1,
+    name: "Админ",
+    phone: "+998(90) 123-45-67",
+    role: "Администратор",
+  },
+  {
+    username: process.env.GAYRAT_USERNAME, // сюда вставляешь имя пользователя из .env
+    password: process.env.GAYRAT_PSW, // сюда вставляешь хэш из .env
+    _id: 2,
+    name: "Гайрат Файзиев",
+    phone: "+998 (90) 978-44-64",
+    role: "Менеджер по продажам",
   },
 ];
 
@@ -111,12 +122,20 @@ app.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Неверный пароль" });
   }
 
-  const token = jwt.sign({ username: user.username, _id: user._id }, SECRET, {
-    // создаём токен с полезной нагрузкой (username) и секретом
-    expiresIn: "1h", // токен будет действовать 1 час
-  });
-
-  res.json({ token }); // возвращаем токен клиенту
+  const token = jwt.sign(
+    { username: user.username, _id: user._id, name: user.name },
+    SECRET,
+    {
+      // создаём токен с полезной нагрузкой (username) и секретом
+      expiresIn: "1h", // токен будет действовать 1 час
+    },
+  );
+  const userData = {
+    name: user.name,
+    phone: user.phone,
+    role: user.role,
+  };
+  res.json({ token, user: userData }); // возвращаем токен клиенту
 });
 
 app.listen(3000);
