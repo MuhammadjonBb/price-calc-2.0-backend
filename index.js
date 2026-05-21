@@ -5,8 +5,11 @@ const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
 const { auth } = require("./auth");
 const nanoid = require("nanoid").nanoid;
+const axios = require("axios");
+const { parse } = require("csv-parse/sync");
 
 require("dotenv").config();
+const SHEET_ID = process.env.SHEET_ID;
 
 const app = express();
 app.use(
@@ -41,14 +44,22 @@ const users = [
 
 const orders = []; // массив для хранения заказов, в реальном приложении это должна быть база данных
 
-app.get("/products", auth, (req, res) => {
-  res.json(products);
+app.get("/products", auth, async (req, res) => {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    const response = await fetch(url);
+    const data = await response.text();
+    const products = parse(data, { columns: true, skip_empty_lines: true });
+    res.json(products);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Не удалось загрузить таблицу" });
+  }
 });
 
 app.get("/orders", auth, (req, res) => {
   const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
   const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
-  console.log(userOrders);
 
   res.json(userOrders);
 });
