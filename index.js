@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
 const { auth } = require("./auth");
 const nanoid = require("nanoid").nanoid;
-const axios = require("axios");
 const { parse } = require("csv-parse/sync");
 
 require("dotenv").config();
@@ -146,7 +145,7 @@ app.post("/login", async (req, res) => {
     phone: user.phone,
     role: user.role,
   };
-  res.json({ token, user: userData }); // возвращаем токен клиенту
+  res.json({ token, user: userData }); // возвращаем токен и данные пользователя
 });
 
 app.listen(3000);
