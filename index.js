@@ -6,9 +6,16 @@ const products = require("./data/products.json");
 const { auth } = require("./auth");
 const nanoid = require("nanoid").nanoid;
 const { parse } = require("csv-parse/sync");
+const { google } = require("googleapis");
 
 require("dotenv").config();
-const SHEET_ID = process.env.SHEET_ID;
+const SPREADSHEET_ID = process.env.SHEET_ID;
+const RANGE = "TASHKENT!A1:Z1000";
+
+const authClient = new google.auth.GoogleAuth({
+  keyFile: "./onyx-ivy-497511-m3-dc747c4e3f99.json", // ваше имя файла
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
 
 const app = express();
 app.use(
@@ -45,14 +52,21 @@ const orders = []; // массив для хранения заказов, в р
 
 app.get("/products", auth, async (req, res) => {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-    const response = await fetch(url);
-    const data = await response.text();
-    const products = parse(data, { columns: true, skip_empty_lines: true });
+    const sheets = google.sheets({ version: "v4", auth: authClient });
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: RANGE,
+    });
+
+    const [headers, ...rows] = response.data.values;
+    const products = rows.map((row) =>
+      Object.fromEntries(headers.map((h, i) => [h, row[i] ?? ""])),
+    );
+
     res.json(products);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Не удалось загрузить таблицу" });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -148,4 +162,6 @@ app.post("/login", async (req, res) => {
   res.json({ token, user: userData }); // возвращаем токен и данные пользователя
 });
 
-app.listen(3000);
+app.listen(3000, "0.0.0.0", () => {
+  console.log("Server running");
+});
