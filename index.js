@@ -14,7 +14,10 @@ const SPREADSHEET_ID = process.env.SHEET_ID;
 const RANGE = "TASHKENT!A1:Z1000";
 
 const authClient = new google.auth.GoogleAuth({
-  keyFile: "./onyx-ivy-497511-m3-dc747c4e3f99.json", // ваше имя файла
+  keyFile:
+    process.env.NODE_ENV === "production"
+      ? "/etc/secrets/onyx-ivy-497511-m3-dc747c4e3f99.json"
+      : "./onyx-ivy-497511-m3-dc747c4e3f99.json", // ваше имя файла
   scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
 });
 
