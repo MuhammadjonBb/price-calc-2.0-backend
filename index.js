@@ -66,6 +66,11 @@ const users = [
 
 // const orders = []; // массив для хранения заказов, в реальном приложении это должна быть база данных
 
+// GET / - проверка работоспособности сервера
+app.get("/", (req, res) => {
+  res.send("OK");
+});
+
 app.get("/products", auth, async (req, res) => {
   try {
     const sheets = google.sheets({ version: "v4", auth: authClient });
