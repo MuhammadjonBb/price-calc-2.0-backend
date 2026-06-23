@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 const products = require("./data/products.json");
 const { auth } = require("./auth");
 const nanoid = require("nanoid").nanoid;
-const { parse } = require("csv-parse/sync");
 const { google } = require("googleapis");
+const supabase = require("./db");
 
 require("dotenv").config();
 const SPREADSHEET_ID = process.env.SHEET_ID;
@@ -35,7 +35,7 @@ const users = [
     password: process.env.ADMIN_PSW, // сюда вставляешь хэш из .env
     _id: 1,
     name: "Админ",
-    phone: "+998(90) 123-45-67",
+    phone: "+998(90) 123 45 67",
     role: "Администратор",
   },
   {
@@ -43,12 +43,20 @@ const users = [
     password: process.env.GAYRAT_PSW, // сюда вставляешь хэш из .env
     _id: 2,
     name: "Гайрат Файзиев",
-    phone: "+998 (90) 978-44-64",
+    phone: "+998 (90) 978 44 64",
     role: "Менеджер по продажам",
+  },
+  {
+    username: process.env.AXMAD_USERNAME, // сюда вставляешь имя пользователя из .env
+    password: process.env.AXMAD_PSW, // сюда вставляешь хэш из .env
+    _id: 3,
+    name: "Ахмадбек Давлетов",
+    phone: "+998 91 785 14 52",
+    role: "Менеджер по закупкам",
   },
 ];
 
-const orders = []; // массив для хранения заказов, в реальном приложении это должна быть база данных
+// const orders = []; // массив для хранения заказов, в реальном приложении это должна быть база данных
 
 app.get("/products", auth, async (req, res) => {
   try {
@@ -70,62 +78,118 @@ app.get("/products", auth, async (req, res) => {
   }
 });
 
-app.get("/orders", auth, (req, res) => {
-  const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
-  const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
+// app.get("/orders", auth, (req, res) => {
+//   const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
+//   const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
 
-  res.json(userOrders);
+//   res.json(userOrders);
+// });
+
+// app.post("/orders", auth, (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const {
+//       name,
+//       agent,
+//       statusCode,
+//       products: orderProducts,
+//       comment,
+//       roadExpense,
+//     } = req.body;
+
+//     if (!name || !agent || statusCode === undefined) {
+//       return res.status(400).json({ message: "Отсутствуют обязательные поля" });
+//     }
+
+//     const newOrder = {
+//       _id: nanoid(),
+//       name,
+//       agent,
+//       statusCode,
+//       products: orderProducts || [],
+//       user: userId,
+//       createdAt: new Date(),
+//       comment,
+//       roadExpense: roadExpense || 0,
+//     };
+
+//     orders.unshift(newOrder);
+
+//     res.status(201).json(newOrder);
+//   } catch (error) {
+//     res.status(500).json({ message: "Ошибка сервера", error: error.message });
+//   }
+// });
+
+// app.delete("/orders/:id", auth, (req, res) => {
+//   const userId = req.user._id;
+//   const orderId = req.params.id;
+
+//   const orderIndex = orders.findIndex(
+//     (order) => order._id === orderId && order.user === userId,
+//   );
+
+//   if (orderIndex === -1) {
+//     return res.status(404).json({ message: "Заказ не найден" });
+//   }
+
+//   orders.splice(orderIndex, 1);
+//   res.json({ message: "Заказ удалён" });
+// });
+
+app.get("/orders", auth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("user_id", req.user._id)
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ message: error.message });
+  res.json(data);
 });
 
-app.post("/orders", auth, (req, res) => {
-  try {
-    const userId = req.user._id;
-    const {
-      name,
-      agent,
-      statusCode,
-      products: orderProducts,
-      comment,
-      roadExpense,
-    } = req.body;
+app.post("/orders", auth, async (req, res) => {
+  const {
+    name,
+    agent,
+    statusCode,
+    products: orderProducts,
+    comment,
+    roadExpense,
+  } = req.body;
 
-    if (!name || !agent || statusCode === undefined) {
-      return res.status(400).json({ message: "Отсутствуют обязательные поля" });
-    }
-
-    const newOrder = {
-      _id: nanoid(),
-      name,
-      agent,
-      statusCode,
-      products: orderProducts || [],
-      user: userId,
-      createdAt: new Date(),
-      comment,
-      roadExpense: roadExpense || 0,
-    };
-
-    orders.unshift(newOrder);
-
-    res.status(201).json(newOrder);
-  } catch (error) {
-    res.status(500).json({ message: "Ошибка сервера", error: error.message });
+  if (!name || !agent || statusCode === undefined) {
+    return res.status(400).json({ message: "Отсутствуют обязательные поля" });
   }
+
+  const newOrder = {
+    id: nanoid(),
+    name,
+    agent,
+    status_code: statusCode,
+    products: orderProducts || [],
+    user_id: req.user._id,
+    comment,
+    road_expense: roadExpense || 0,
+  };
+
+  const { data, error } = await supabase
+    .from("orders")
+    .insert(newOrder)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ message: error.message });
+  res.status(201).json(data);
 });
 
-app.delete("/orders/:id", auth, (req, res) => {
-  const userId = req.user._id;
-  const orderId = req.params.id;
-
-  const orderIndex = orders.findIndex(
-    (order) => order._id === orderId && order.user === userId,
-  );
-
-  if (orderIndex === -1) {
-    return res.status(404).json({ message: "Заказ не найден" });
-  }
-
-  orders.splice(orderIndex, 1);
+app.delete("/orders/:id", auth, async (req, res) => {
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", req.params.id)
+    .eq("user_id", req.user._id);
+  console.log(req.params.id, req.user._id);
+  if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Заказ удалён" });
 });
 
