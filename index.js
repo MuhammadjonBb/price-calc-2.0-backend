@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -20,7 +21,11 @@ const authClient = new google.auth.GoogleAuth({
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.100.33:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.100.33:5173",
+      "https://td-price.netlify.app",
+    ],
     credentials: true, // разрешаем отправлять куки и заголовки авторизации
   }),
 );
