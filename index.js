@@ -86,7 +86,6 @@ app.get("/products", auth, async (req, res) => {
 
     res.json(products);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -201,7 +200,6 @@ app.delete("/orders/:id", auth, async (req, res) => {
     .delete()
     .eq("id", req.params.id)
     .eq("user_id", req.user._id);
-  console.log(req.params.id, req.user._id);
   if (error) return res.status(500).json({ message: error.message });
   res.json({ message: "Заказ удалён" });
 });
