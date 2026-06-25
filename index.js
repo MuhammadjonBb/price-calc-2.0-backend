@@ -11,7 +11,6 @@ const supabase = require("./db");
 
 require("dotenv").config();
 const SPREADSHEET_ID = process.env.SHEET_ID;
-const RANGE = "TASHKENT!A1:Z1000";
 
 const authClient = new google.auth.GoogleAuth({
   keyFile:
@@ -73,10 +72,11 @@ app.get("/", (req, res) => {
 
 app.get("/products", auth, async (req, res) => {
   try {
+    const sheet = req.query.sheet || "TASHKENT"; // дефолт если не передан
     const sheets = google.sheets({ version: "v4", auth: authClient });
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: RANGE,
+      range: `${sheet}!A:D`,
     });
 
     const [headers, ...rows] = response.data.values;
@@ -89,7 +89,6 @@ app.get("/products", auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // app.get("/orders", auth, (req, res) => {
 //   const userId = req.user._id; // получаем ID пользователя из запроса, который был установлен в middleware auth
 //   const userOrders = orders.filter((order) => order.user === userId); // фильтруем заказы по ID пользователя
