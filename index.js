@@ -236,6 +236,32 @@ app.post("/login", async (req, res) => {
   res.json({ token, user: userData }); // возвращаем токен и данные пользователя
 });
 
+app.post("/api/kp", async (req, res) => {
+  const { agent, items, total } = req.body;
+
+  const { data, error } = await supabase
+    .from("kp")
+    .insert({ agent, items, total })
+    .select("id, created_at")
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ id: data.id, created_at: data.created_at });
+});
+
+// // опционально — получить КП по id (для проверки/просмотра по QR)
+// app.get("/api/kp/:id", async (req, res) => {
+//   const { data, error } = await supabase
+//     .from("kp")
+//     .select("*")
+//     .eq("id", req.params.id)
+//     .single();
+
+//   if (error) return res.status(404).json({ error: "Not found" });
+//   res.json(data);
+// });
+
 app.listen(3000, "0.0.0.0", () => {
   console.log("Server running");
 });
