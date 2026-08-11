@@ -76,7 +76,7 @@ app.get("/products", auth, async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth: authClient });
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${sheet}!A:D`,
+      range: `${sheet}!A:E`,
     });
 
     const [headers, ...rows] = response.data.values;
